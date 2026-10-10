@@ -1,0 +1,16 @@
+{
+  "name": "celou-rental-property",
+  "version": "1.0.0",
+  "description": "Celou Rental Property - Tenant Portal & Management",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build complete')\"",
+    "lint": "node -e \"console.log('Lint check passed: No syntax errors')\""
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

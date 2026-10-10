@@ -1,0 +1,7 @@
+{
+  "name": "Celou Rental Property",
+  "description": "Tenant portal and comprehensive property management system for Celou Rental Property",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
