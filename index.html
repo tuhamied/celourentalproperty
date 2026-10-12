@@ -413,7 +413,19 @@
 
             <!-- DEDICATED PUBLIC TENANT APPLICATION VIEW (#apply) -->
             <section id="tab-apply" class="space-y-6 hidden max-w-2xl mx-auto py-8">
-                <div id="public-form-card" class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-8 space-y-6">
+                <!-- Splash / Loading screen shown for 7 seconds before form -->
+                <div id="apply-splash" class="bg-slate-950 min-h-[70vh] flex flex-col items-center justify-center text-center space-y-6 p-8 rounded-xl">
+                    <img src="https://i.imgur.com/e4dbngu.jpeg" alt="Celou Logo" class="w-20 h-20 object-cover rounded-2xl bg-slate-800 p-0.5 border border-slate-700 shadow-inner animate-pulse">
+                    <div>
+                        <h1 class="text-2xl font-extrabold text-white tracking-tight">Celou Rental Property</h1>
+                        <p class="text-sm text-slate-400 mt-2">Preparing your application form…</p>
+                    </div>
+                    <div class="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="apply-splash-bar" class="h-full bg-brand-500 rounded-full" style="width:0%; transition: width 7s linear;"></div>
+                    </div>
+                    <p class="text-xs text-slate-500">Please wait a moment</p>
+                </div>
+                <div id="public-form-card" class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-8 space-y-6 hidden">
                     <div class="text-center space-y-3 border-b border-slate-800 pb-6">
                         <img src="https://i.imgur.com/e4dbngu.jpeg" alt="Celou Logo" class="w-16 h-16 object-cover mx-auto rounded-2xl bg-slate-800 p-0.5 border border-slate-700 shadow-inner">
                         <div>
@@ -475,6 +487,17 @@
     <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Valid Government ID Type & Number *</label>
         <input type="text" id="pub-govid" required placeholder="e.g. PhilSys / UMID / Driver's License #" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+    </div>
+    <div class="sm:col-span-2">
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Upload Government Issued ID Photo *</label>
+        <input type="file" id="pub-govid-file" accept="image/*" required onchange="previewReceiptUpload(this, 'pub-govid-preview', 'pub-govid-data')" class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+        <input type="hidden" id="pub-govid-data" required>
+        <div id="pub-govid-preview" class="hidden mt-2 flex items-center space-x-3 p-2 bg-slate-950 border border-slate-800 rounded-lg">
+            <img id="pub-govid-preview-img" src="" alt="ID Preview" class="h-16 w-auto rounded border border-slate-700">
+            <span class="text-xs text-slate-400">ID photo attached</span>
+            <button type="button" onclick="clearReceiptUpload('pub-govid-file', 'pub-govid-preview', 'pub-govid-data')" class="text-xs text-rose-400 hover:text-rose-300 ml-auto"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-1">Clear photo of PhilSys, Driver’s License, Passport, UMID, or other valid government ID.</p>
     </div>
     <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1">Previous Landlord / Address *</label>
@@ -5294,6 +5317,24 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
                 setTimeout(checkURLHash, 50);
             }
         });
+        
+        function showApplyFormAfterSplash() {
+            const splash = document.getElementById('apply-splash');
+            const formCard = document.getElementById('public-form-card');
+            const bar = document.getElementById('apply-splash-bar');
+            if (!splash || !formCard) return;
+            splash.classList.remove('hidden');
+            formCard.classList.add('hidden');
+            if (bar) {
+                bar.style.width = '0%';
+                setTimeout(() => { bar.style.width = '100%'; }, 50);
+            }
+            setTimeout(() => {
+                splash.classList.add('hidden');
+                formCard.classList.remove('hidden');
+            }, 7000); // 7 seconds
+        }
+
         function checkURLHash() {
             const rawHash = window.location.hash || '';
             const [hashPath, queryString] = rawHash.split('?');
@@ -5313,6 +5354,11 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
                 if(hashPath === '#apply') {
                     switchTab('apply');
                     populatePublicRoomDropdown();
+                    showApplyFormAfterSplash();
+                    // Extra clean: hide any remaining admin chrome
+                    document.documentElement.classList.add('is-public-portal');
+                    const extras = ['sidebar-nav','top-navbar','admin-header-actions','mobile-quick-nav','pwa-install-banner'];
+                    extras.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
                 } else if(hashPath === '#repair' || hashPath === '#ticket') {
                     switchTab('repair');
                     initRepairFromURL(urlParams);
@@ -9732,6 +9778,11 @@ Thank you!
             if(!selectedOpt || !selectedOpt.dataset.name) return;
 
             const wifiChoice = document.getElementById('pub-wifi') ? document.getElementById('pub-wifi').value : 'No';
+            const govidData = document.getElementById('pub-govid-data') ? document.getElementById('pub-govid-data').value : '';
+            if (!govidData) {
+                showToast("Please upload a photo of your government issued ID.", "error");
+                return;
+            }
             applications.push({
                 id: applications.length ? Math.max(...applications.map(a => a.id)) + 1 : 1,
                 name: document.getElementById('pub-name').value,
@@ -9745,6 +9796,8 @@ Thank you!
                 vehicle: document.getElementById('pub-vehicle').value || 'None',
                 emergName: document.getElementById('pub-emerg-name').value,
                 emergContact: document.getElementById('pub-emerg-contact').value,
+                govid: document.getElementById('pub-govid') ? document.getElementById('pub-govid').value : '',
+                govidPhoto: govidData,
                 movein: "October 2026",
                 status: 'PENDING'
             });
@@ -10138,7 +10191,10 @@ Thank you!
                         <td class="px-4 py-3 text-slate-300">${app.contact} <br><span class="text-slate-400 text-[11px]">${app.email || ''}</span></td>
                         <td class="px-4 py-3 text-slate-300">${app.unit} - ${app.room}</td>
                         <td class="px-4 py-3 text-slate-300">Occupants: ${app.occupants || 1}<br>Vehicle: ${app.vehicle || 'None'}</td>
-                        <td class="px-4 py-3 text-slate-300">${app.emergName || 'N/A'}: <br>${app.emergContact || 'N/A'}</td>
+                        <td class="px-4 py-3 text-slate-300">${app.emergName || 'N/A'}: <br>${app.emergContact || 'N/A'}
+                            ${app.govid ? '<br><span class="text-[10px] text-slate-400">ID: ' + app.govid + '</span>' : ''}
+                            ${app.govidPhoto ? '<br><button type="button" onclick="openReceiptViewer(\'' + app.govidPhoto + '\', \'Government ID: ' + (app.name||'') + '\')" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold mt-1"><i class="fa-solid fa-id-card mr-1"></i>View ID</button>' : ''}
+                        </td>
                         <td class="px-4 py-3"><span class="px-2 py-1 ${app.status === 'APPROVED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-amber-950 text-amber-400 border border-amber-900'} rounded text-xs">${app.status}</span></td>
                         <td class="px-4 py-3 text-right space-x-2">
                             ${app.status === 'PENDING' ? `<button onclick="openAssignApplicantModal(${app.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded text-xs font-semibold shadow inline-flex items-center"><i class="fa-solid fa-user-plus mr-1"></i> Enroll & Assign Room</button>` : `<span class="text-xs text-emerald-400 font-bold">Enrolled</span>`}
