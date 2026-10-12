@@ -4113,12 +4113,17 @@
                     </ol>
                 </div>
 
-                <!-- Desktop / Laptop / Chromebook -->
-                <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-1 text-[11px] text-slate-400">
-                    <p class="font-semibold text-slate-300 flex items-center">
-                        <i class="fa-solid fa-laptop mr-1.5 text-slate-400"></i> Windows, Mac & Chromebook:
+                <!-- Desktop Chrome -->
+                <div class="p-3.5 bg-slate-950/90 rounded-xl border border-brand-600/40 space-y-2">
+                    <p class="font-bold text-brand-300 flex items-center text-xs">
+                        <i class="fa-brands fa-chrome mr-2"></i> Google Chrome on Desktop (Windows / Mac)
                     </p>
-                    <p>Click the <strong class="text-white">Install App</strong> button in the browser address bar (right side next to bookmarks icon) or use Chrome menu (⋮) &rarr; <em>Save and share</em> &rarr; <em>Install Celou Rental Property</em>.</p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
+                        <li>Look for the <strong class="text-white">Install icon</strong> (monitor with arrow) on the right side of the address bar. Click it and choose <strong class="text-emerald-400">Install</strong>.</li>
+                        <li>Or open the Chrome menu <strong class="text-white">(⋮)</strong> → <strong class="text-emerald-400">Save and share</strong> → <strong class="text-emerald-400">Install Celou Rental Property…</strong></li>
+                        <li>Confirm the install. The app will open in its own window.</li>
+                    </ol>
+                    <p class="text-[10px] text-slate-400">If the install option is missing, refresh the page once (after the site loads fully) and try again. The site must be opened over HTTPS.</p>
                 </div>
             </div>
 
@@ -4160,18 +4165,11 @@
 
         function checkPWAInstallationState() {
             if (isRunningStandalonePWA()) {
-                // Running as installed standalone PWA, hide install prompts
                 hidePWAInstallButtons();
                 return;
             }
-
-            const userAgent = (navigator.userAgent || '').toLowerCase();
-            const isMobileOrTablet = /android|iphone|ipad|ipod|mobile|tablet/i.test(userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
-            
-            // Show buttons on mobile/tablet or when Chrome install prompt is ready
-            if (deferredPWAInstallPrompt || window.deferredPWAInstallPrompt || isMobileOrTablet) {
-                showPWAInstallButtons();
-            }
+            // Always show install option when not already installed (Chrome desktop + mobile)
+            showPWAInstallButtons();
         }
 
         function showPWAInstallButtons() {
@@ -4209,6 +4207,16 @@
             }
 
             const promptEvent = deferredPWAInstallPrompt || window.deferredPWAInstallPrompt;
+            const isChrome = /chrome|chromium|crios/i.test(navigator.userAgent) && !/edg|opr|opera/i.test(navigator.userAgent);
+            const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+
+            if (!isSecure) {
+                if (typeof showToast === 'function') {
+                    showToast("Install requires HTTPS. Open the site over a secure connection (https://).", "error");
+                }
+                openIOSGuideModal();
+                return;
+            }
 
             if (promptEvent) {
                 promptEvent.prompt();
@@ -4216,11 +4224,11 @@
                     if (choiceResult && choiceResult.outcome === 'accepted') {
                         hidePWAInstallButtons();
                         if (typeof showToast === 'function') {
-                            showToast("Celou App installation initiated! Adding to your home screen...", "success");
+                            showToast("Celou App installation initiated!", "success");
                         }
                     } else {
                         if (typeof showToast === 'function') {
-                            showToast("Installation postponed. You can install anytime via the menu.", "info");
+                            showToast("Installation postponed. You can install anytime via the Chrome menu.", "info");
                         }
                     }
                     deferredPWAInstallPrompt = null;
@@ -4230,8 +4238,11 @@
                     openIOSGuideModal();
                 });
             } else {
-                // If Chrome hasn't fired beforeinstallprompt or on iOS Safari, open step-by-step guided instructions
+                // Native prompt not ready — show Chrome instructions
                 openIOSGuideModal();
+                if (isChrome && typeof showToast === 'function') {
+                    showToast("Look for the Install icon in the address bar, or menu (⋮) → Save and share → Install Celou Rental Property.", "info");
+                }
             }
         }
 
@@ -4285,29 +4296,37 @@
 
         // Register Service Worker early on DOMContentLoaded
         function initCelouServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                const swPath = window.location.pathname.startsWith('/Celou') ? '/Celou/sw.js' : '/sw.js';
-                navigator.serviceWorker.register(swPath, { scope: '/' })
-                    .then((reg) => {
+            if ('serviceWorker' in navigator && (window.isSecureContext || location.hostname === 'localhost')) {
+                const candidates = [
+                    '/sw.js',
+                    './sw.js',
+                    window.location.pathname.startsWith('/Celou') ? '/Celou/sw.js' : null
+                ].filter(Boolean);
+
+                function tryRegister(i) {
+                    if (i >= candidates.length) {
+                        console.warn('All service worker registration attempts failed');
                         checkPWAInstallationState();
-                        // Prompt update if service worker changed
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            if (newWorker) {
-                                newWorker.addEventListener('statechange', () => {
-                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                        console.log('Celou PWA: Fresh update cached and ready');
-                                    }
-                                });
-                            }
-                        });
-                    })
-                    .catch(() => {
-                        // Fallback attempt to root sw.js
-                        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                            .then(() => checkPWAInstallationState())
-                            .catch(() => checkPWAInstallationState());
-                    });
+                        return;
+                    }
+                    navigator.serviceWorker.register(candidates[i], { scope: '/' })
+                        .then((reg) => {
+                            console.log('SW registered:', candidates[i]);
+                            checkPWAInstallationState();
+                            reg.addEventListener('updatefound', () => {
+                                const newWorker = reg.installing;
+                                if (newWorker) {
+                                    newWorker.addEventListener('statechange', () => {
+                                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                            console.log('Celou PWA: Fresh update cached and ready');
+                                        }
+                                    });
+                                }
+                            });
+                        })
+                        .catch(() => tryRegister(i + 1));
+                }
+                tryRegister(0);
             } else {
                 checkPWAInstallationState();
             }
