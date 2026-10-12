@@ -8994,9 +8994,13 @@ Thank you!
                     : caretakerSalaryRecords;
                 recordsToShow.forEach(r => {
                     const isPaid = r.status === 'PAID';
+                    const amountPaid = parseFloat(r.amountPaid) || 0;
+                    const hasPartial = !isPaid && (amountPaid > 0 || (parseFloat(r.deductions) || 0) > 0);
                     const statusBadge = isPaid
                         ? `<span class="px-2.5 py-1 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded text-xs font-bold"><i class="fa-solid fa-circle-check mr-1"></i> PAID</span>`
-                        : `<span class="px-2.5 py-1 bg-rose-950 text-rose-400 border border-rose-800 rounded text-xs font-bold animate-pulse"><i class="fa-solid fa-clock mr-1"></i> UNPAID</span>`;
+                        : hasPartial
+                            ? `<span class="px-2.5 py-1 bg-amber-950 text-amber-400 border border-amber-800 rounded text-xs font-bold"><i class="fa-solid fa-clock mr-1"></i> PARTIAL</span>`
+                            : `<span class="px-2.5 py-1 bg-rose-950 text-rose-400 border border-rose-800 rounded text-xs font-bold animate-pulse"><i class="fa-solid fa-clock mr-1"></i> UNPAID</span>`;
                     
                     const actionBtn = isPaid
                         ? `<button onclick="markCaretakerSalaryUnpaid('${r.month}')" class="text-xs text-rose-400 hover:text-rose-300 underline font-semibold">Mark Unpaid</button>`
@@ -9005,7 +9009,9 @@ Thank you!
                     const receiptBtn = r.receipt ? `<button onclick="openReceiptViewer('${r.receipt}', 'Payroll Receipt: ${r.month}')" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold ml-1"><i class="fa-solid fa-receipt"></i> Receipt</button>` : '';
                     const methodInfo = isPaid
                         ? `<span class="text-white font-medium">${r.method || 'CASH'}</span> • <span class="text-slate-400 text-[11px]">${r.dateDisbursed || 'Recorded'}</span> ${receiptBtn}<br><span class="text-[11px] text-slate-400 italic">${r.notes || ''}</span>`
-                        : `<span class="text-amber-400/90 text-xs italic">${r.notes || 'No payment recorded'}</span>`;
+                        : (amountPaid > 0 || (parseFloat(r.deductions) || 0) > 0)
+                            ? `<span class="text-amber-400/90 text-xs">Paid so far: ₱${amountPaid.toLocaleString()} | Deducted: ₱${(parseFloat(r.deductions)||0).toLocaleString()}<br><span class="text-[11px] italic">${r.notes || ''}</span></span>`
+                            : `<span class="text-amber-400/90 text-xs italic">${r.notes || 'No payment recorded'}</span>`;
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-800/50 transition">
@@ -10036,6 +10042,9 @@ Thank you!
                     const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
                     const monthKey = monthNames[expDateObj.getMonth()] + " " + expDateObj.getFullYear();
                     const activeC = (caretakers || []).find(c => c.status === 'Active');
+                    const fullSalary = (activeC && activeC.monthlySalary) ? parseFloat(activeC.monthlySalary) : (caretakerMonthlySalary || 4000);
+                    const paidAmt = parseFloat(exp.amount) || 0;
+
                     let rec = caretakerSalaryRecords.find(r => r.month === monthKey);
                     if (!rec) {
                         rec = {
@@ -10043,27 +10052,40 @@ Thank you!
                             month: monthKey,
                             caretakerId: activeC ? activeC.id : null,
                             caretakerName: activeC ? activeC.name : 'Caretaker',
-                            baseAmount: parseFloat(exp.amount) || 0,
+                            baseAmount: fullSalary,
                             deductions: 0,
-                            netAmount: parseFloat(exp.amount) || 0,
-                            status: 'PAID',
-                            method: 'Expense Sync',
-                            dateDisbursed: exp.date || '',
-                            notes: 'Synced from approved expense: ' + (exp.description || ''),
-                            receipt: exp.receipt || ''
+                            amountPaid: 0,
+                            netAmount: fullSalary,
+                            status: 'UNPAID',
+                            method: '',
+                            dateDisbursed: '',
+                            notes: '',
+                            receipt: ''
                         };
                         caretakerSalaryRecords.push(rec);
-                    } else {
-                        rec.status = 'PAID';
-                        rec.baseAmount = Math.max(parseFloat(rec.baseAmount) || 0, parseFloat(exp.amount) || 0);
-                        rec.netAmount = Math.max(0, rec.baseAmount - (parseFloat(rec.deductions) || 0));
-                        rec.dateDisbursed = exp.date || rec.dateDisbursed;
-                        rec.method = rec.method || 'Expense Sync';
-                        rec.notes = (rec.notes || '') + ' | Synced from approved expense';
-                        rec.receipt = exp.receipt || rec.receipt || '';
-                        if (activeC && !rec.caretakerId) rec.caretakerId = activeC.id;
-                        if (activeC && !rec.caretakerName) rec.caretakerName = activeC.name;
                     }
+
+                    // Keep the full monthly salary as base
+                    rec.baseAmount = fullSalary;
+                    if (activeC && !rec.caretakerId) rec.caretakerId = activeC.id;
+                    if (activeC && !rec.caretakerName) rec.caretakerName = activeC.name;
+
+                    // Treat the approved expense as a partial (or full) payment toward this month
+                    rec.amountPaid = (parseFloat(rec.amountPaid) || 0) + paidAmt;
+                    const totalDeductions = parseFloat(rec.deductions) || 0;
+                    const remaining = Math.max(0, fullSalary - totalDeductions - rec.amountPaid);
+                    rec.netAmount = remaining;
+
+                    if (remaining <= 0) {
+                        rec.status = 'PAID';
+                        rec.dateDisbursed = exp.date || rec.dateDisbursed || new Date().toISOString().split('T')[0];
+                        rec.method = rec.method || 'Expense Sync';
+                    } else {
+                        rec.status = 'UNPAID'; // still has balance
+                    }
+
+                    rec.notes = (rec.notes ? rec.notes + ' | ' : '') + `Partial payment ₱${paidAmt.toLocaleString()} from approved expense`;
+                    if (exp.receipt) rec.receipt = exp.receipt;
                 }
 
                 saveToStorage();
