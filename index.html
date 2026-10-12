@@ -9002,8 +9002,9 @@ Thank you!
                         ? `<button onclick="markCaretakerSalaryUnpaid('${r.month}')" class="text-xs text-rose-400 hover:text-rose-300 underline font-semibold">Mark Unpaid</button>`
                         : `<button onclick="openLandlordDisburseSalaryModal('${r.month}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold shadow transition"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> Disburse</button>`;
 
+                    const receiptBtn = r.receipt ? `<button onclick="openReceiptViewer('${r.receipt}', 'Payroll Receipt: ${r.month}')" class="text-[10px] text-blue-400 hover:text-blue-300 font-semibold ml-1"><i class="fa-solid fa-receipt"></i> Receipt</button>` : '';
                     const methodInfo = isPaid
-                        ? `<span class="text-white font-medium">${r.method || 'CASH'}</span> • <span class="text-slate-400 text-[11px]">${r.dateDisbursed || 'Recorded'}</span> <br><span class="text-[11px] text-slate-400 italic">${r.notes || ''}</span>`
+                        ? `<span class="text-white font-medium">${r.method || 'CASH'}</span> • <span class="text-slate-400 text-[11px]">${r.dateDisbursed || 'Recorded'}</span> ${receiptBtn}<br><span class="text-[11px] text-slate-400 italic">${r.notes || ''}</span>`
                         : `<span class="text-amber-400/90 text-xs italic">${r.notes || 'No payment recorded'}</span>`;
 
                     tbody.innerHTML += `
@@ -10048,7 +10049,8 @@ Thank you!
                             status: 'PAID',
                             method: 'Expense Sync',
                             dateDisbursed: exp.date || '',
-                            notes: 'Synced from approved expense: ' + (exp.description || '')
+                            notes: 'Synced from approved expense: ' + (exp.description || ''),
+                            receipt: exp.receipt || ''
                         };
                         caretakerSalaryRecords.push(rec);
                     } else {
@@ -10058,6 +10060,7 @@ Thank you!
                         rec.dateDisbursed = exp.date || rec.dateDisbursed;
                         rec.method = rec.method || 'Expense Sync';
                         rec.notes = (rec.notes || '') + ' | Synced from approved expense';
+                        rec.receipt = exp.receipt || rec.receipt || '';
                         if (activeC && !rec.caretakerId) rec.caretakerId = activeC.id;
                         if (activeC && !rec.caretakerName) rec.caretakerName = activeC.name;
                     }
