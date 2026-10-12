@@ -1480,7 +1480,7 @@
                             </div>
                             <form onsubmit="handleCaretakerPinSubmit(event)" class="space-y-3">
                                 <div class="flex justify-center">
-                                    <input type="password" id="caretaker-pin-input" maxlength="8" placeholder="Enter PIN" required class="w-44 text-center tracking-widest text-lg font-mono font-bold px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-500">
+                                    <input type="password" id="caretaker-pin-input" maxlength="16" placeholder="Enter PIN" required class="w-44 text-center tracking-widest text-lg font-mono font-bold px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
                                     <i class="fa-solid fa-key mr-1.5"></i> Unlock Payroll Account
@@ -3213,15 +3213,15 @@
             <form onsubmit="submitChangeCaretakerPin(event)" class="space-y-3 text-xs">
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">Current PIN *</label>
-                    <input type="password" id="current-caretaker-pin-input" maxlength="6" required placeholder="Current PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+                    <input type="password" id="current-caretaker-pin-input" maxlength="16" required placeholder="Current PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">New PIN *</label>
-                    <input type="password" id="new-caretaker-pin-input" maxlength="6" required placeholder="Enter new PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+                    <input type="password" id="new-caretaker-pin-input" maxlength="16" required placeholder="Enter new PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">Confirm New PIN *</label>
-                    <input type="password" id="confirm-caretaker-pin-input" maxlength="6" required placeholder="Confirm new PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
+                    <input type="password" id="confirm-caretaker-pin-input" maxlength="16" required placeholder="Confirm new PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white">
                 </div>
                 <div class="flex space-x-3 pt-2">
                     <button type="button" onclick="closeChangeCaretakerPinModal()" class="w-1/2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium">Cancel</button>
@@ -3419,6 +3419,10 @@
                     </div>
                 </div>
                 <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Personal PIN * (required to view own salary)</label>
+                    <input type="password" id="hire-caretaker-pin" required maxlength="16" placeholder="4-8 digit PIN" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white font-mono tracking-widest">
+                </div>
+                <div>
                     <label class="block font-semibold text-slate-300 mb-1">Notes / Roles</label>
                     <input type="text" id="hire-caretaker-notes" placeholder="e.g. Cleaning, tenant coordination, maintenance reporting" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
                 </div>
@@ -3450,6 +3454,69 @@
                 <button type="button" onclick="closeConfirmModal(false)" class="w-1/2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancel</button>
                 <button type="button" id="confirm-action-btn" onclick="closeConfirmModal(true)" class="w-1/2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-lg">Confirm</button>
             </div>
+        </div>
+    </div>
+
+    
+    <!-- Edit Caretaker Modal (Landlord) -->
+    <div id="landlord-edit-caretaker-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden text-slate-100">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center"><i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i> Edit Caretaker Record</h3>
+                <button onclick="closeEditCaretakerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="edit-caretaker-form" onsubmit="submitEditCaretaker(event)" class="p-5 space-y-3 text-sm">
+                <input type="hidden" id="edit-caretaker-id">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Full Name *</label>
+                    <input type="text" id="edit-caretaker-name" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Phone</label>
+                        <input type="text" id="edit-caretaker-phone" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hired Date</label>
+                        <input type="date" id="edit-caretaker-date" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Property</label>
+                        <select id="edit-caretaker-property" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                            <option value="All Properties">All Properties</option>
+                            <option value="BF Resort Village">BF Resort Village</option>
+                            <option value="GreenMark Homes">GreenMark Homes</option>
+                            <option value="GreenPlace Homes 3">GreenPlace Homes 3</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Monthly Salary (₱)</label>
+                        <input type="number" step="any" id="edit-caretaker-salary" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Status</label>
+                    <select id="edit-caretaker-status" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Terminated">Terminated</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Personal PIN</label>
+                    <input type="password" id="edit-caretaker-pin" maxlength="16" placeholder="Leave blank to keep current" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Notes</label>
+                    <input type="text" id="edit-caretaker-notes" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeEditCaretakerModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -4242,7 +4309,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const LANDLORD_PASSWORD = "caretaker123";
+        const LANDLORD_PASSWORD = "P@$$w0rd";
         let landlordPin = localStorage.getItem('celou_landlord_pin') || LANDLORD_PASSWORD;
         let isFinancialsUnlocked = false;
 
@@ -5033,11 +5100,11 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
         let takeoverAudits = [];
         let caretakerMonthlySalary = 4000;
         const defaultCaretakers = [
-            { id: 1, name: "Maria Santos", phone: "0917 555 4321", assignedProperty: "All Properties", monthlySalary: 4000, hiredDate: "May 1, 2026", status: "Active", notes: "Primary caretaker since May 2026 takeover" }
+            { id: 1, name: "Maria Santos", phone: "0917 555 4321", assignedProperty: "All Properties", monthlySalary: 4000, hiredDate: "May 1, 2026", status: "Active", notes: "Primary caretaker since May 2026 takeover", pin: "passw0rd" }
         ];
         let caretakers = JSON.parse(JSON.stringify(defaultCaretakers));
         const defaultCaretakerSalaryRecords = [
-            { id: 1, month: "May 2026", caretakerName: "Maria Santos", baseAmount: 4000, deductions: 0, netAmount: 4000, status: "UNPAID", method: "", dateDisbursed: "", notes: "Pending landlord disbursement" },
+            { id: 1, month: "May 2026", caretakerId: 1, caretakerName: "Maria Santos", baseAmount: 4000, deductions: 0, netAmount: 4000, status: "UNPAID", method: "", dateDisbursed: "", notes: "Pending landlord disbursement" },
             { id: 2, month: "June 2026", caretakerName: "Maria Santos", baseAmount: 4000, deductions: 0, netAmount: 4000, status: "UNPAID", method: "", dateDisbursed: "", notes: "Pending landlord disbursement" },
             { id: 3, month: "July 2026", caretakerName: "Maria Santos", baseAmount: 4000, deductions: 0, netAmount: 4000, status: "UNPAID", method: "", dateDisbursed: "", notes: "Pending landlord disbursement" },
             { id: 4, month: "August 2026", caretakerName: "Maria Santos", baseAmount: 4000, deductions: 0, netAmount: 4000, status: "UNPAID", method: "", dateDisbursed: "", notes: "Pending landlord disbursement" },
@@ -5048,7 +5115,7 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
         ];
         let caretakerSalaryRecords = JSON.parse(JSON.stringify(defaultCaretakerSalaryRecords));
         let caretakerCashAdvances = [];
-        let caretakerPin = "12345";
+        let caretakerPin = "passw0rd";
         let isCaretakerPayrollUnlocked = false;
         let annualPayments = JSON.parse(JSON.stringify(defaultAnnualPayments));
 
@@ -5203,9 +5270,14 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
         }
 
         function saveToStorage() {
-            const payload = { tenants, rooms, utilities, maintenance, applications, pendingPayments, pendingExpenses, takeoverAudits, annualPayments, caretakerSalaryRecords, caretakerCashAdvances, caretakerPin, caretakers, caretakerMonthlySalary };
+            const payload = {
+                tenants, rooms, utilities, maintenance, applications, pendingPayments, pendingExpenses, takeoverAudits, annualPayments,
+                caretakerSalaryRecords, caretakerCashAdvances, caretakerPin, caretakers, caretakerMonthlySalary,
+                lastModified: Date.now()
+            };
             try {
                 localStorage.setItem('celouPropertyData', JSON.stringify(payload));
+                localStorage.setItem('celouLastModified', String(payload.lastModified));
             } catch (err) {}
             try {
                 db.ref('celouPropertyData').set(payload).catch(() => {});
@@ -5213,6 +5285,15 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
         }
 
         window.addEventListener('hashchange', checkURLHash);
+        // Early public route handling so #apply / #repair etc. work even before full data load
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = window.location.hash || '';
+            const path = raw.split('?')[0];
+            const publicRoutes = ['#apply','#repair','#ticket','#update-info','#tenant-portal','#bill','#sign','#lease','#pay','#qr'];
+            if (publicRoutes.indexOf(path) !== -1 && typeof checkURLHash === 'function') {
+                setTimeout(checkURLHash, 50);
+            }
+        });
         function checkURLHash() {
             const rawHash = window.location.hash || '';
             const [hashPath, queryString] = rawHash.split('?');
@@ -5680,8 +5761,8 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
             }
         }
         function copyPublicApplyLink() {
-			const link = "https://docs.google.com/forms/d/e/1FAIpQLSeRaTMUbTi8B9pnPG31rpUKZn6UAHiKs8t2Ru8vHGEdCZYf3A/viewform";
-			navigator.clipboard.writeText(link).then(() => showToast("Application Link copied to clipboard!"));
+			const link = window.location.origin + window.location.pathname + '#apply';
+			navigator.clipboard.writeText(link).then(() => showToast("New Tenant Application Link copied!"));
 		}
 
         function copyPublicRepairLink() {
@@ -5690,7 +5771,7 @@ GCash: 0976 046 5134 (Tuhamie A. Dimanang) | BPI: 6589 4521 55`;
         }
 
         function copyPublicUpdateLink() {
-			const link = "https://docs.google.com/forms/d/e/1FAIpQLSeRaTMUbTi8B9pnPG31rpUKZn6UAHiKs8t2Ru8vHGEdCZYf3A/viewform";
+			const link = window.location.origin + window.location.pathname + '#update-info';
 			navigator.clipboard.writeText(link).then(() => showToast("Tenant Profile Update Link copied!"));
 		}
 
@@ -8207,28 +8288,39 @@ Thank you!
             if(e) e.preventDefault();
             const input = document.getElementById('caretaker-pin-input');
             const pinVal = input ? input.value.trim() : '';
-            if (pinVal === caretakerPin || pinVal === '12345' || (typeof landlordPin !== 'undefined' && pinVal === landlordPin)) {
+            let matchedCaretaker = null;
+
+            // Check individual caretaker PINs first
+            if (Array.isArray(caretakers)) {
+                matchedCaretaker = caretakers.find(c => c.pin && c.pin === pinVal && c.status === 'Active');
+            }
+
+            if (matchedCaretaker) {
                 isCaretakerPayrollUnlocked = true;
+                window.unlockedCaretakerId = matchedCaretaker.id;
                 if(input) input.value = '';
                 renderCaretakerPayroll();
-                
-                // If using default pin 12345, flash prominent reminder to change PIN
-                if (caretakerPin === '12345' || pinVal === '12345') {
+                showToast(`Unlocked salary details for ${matchedCaretaker.name}`);
+            } else if (pinVal === caretakerPin || pinVal === 'passw0rd' || (typeof landlordPin !== 'undefined' && pinVal === landlordPin)) {
+                isCaretakerPayrollUnlocked = true;
+                window.unlockedCaretakerId = null; // landlord / master unlock
+                if(input) input.value = '';
+                renderCaretakerPayroll();
+                if (caretakerPin === 'passw0rd' || pinVal === 'passw0rd') {
                     showToast("Security Notice: You are using the default PIN. Please change your PIN immediately!", "error");
-                    setTimeout(() => {
-                        openChangeCaretakerPinModal();
-                    }, 800);
+                    setTimeout(() => { openChangeCaretakerPinModal(); }, 800);
                 } else {
-                    showToast("Caretaker Payroll unlocked!");
+                    showToast("Caretaker Payroll unlocked (full access)!");
                 }
             } else {
-                showToast("Incorrect Caretaker Security PIN. Please try again.", "error");
+                showToast("Incorrect PIN. Please try again.", "error");
                 if(input) { input.value = ''; input.focus(); }
             }
         }
 
         function lockCaretakerPayroll() {
             isCaretakerPayrollUnlocked = false;
+            window.unlockedCaretakerId = null;
             renderCaretakerPayroll();
             showToast("Caretaker Payroll locked.");
         }
@@ -8258,7 +8350,7 @@ Thank you!
             const next = document.getElementById('new-caretaker-pin-input').value.trim();
             const conf = document.getElementById('confirm-caretaker-pin-input').value.trim();
 
-            if (curr !== caretakerPin && curr !== '12345') {
+            if (curr !== caretakerPin && curr !== 'passw0rd') {
                 showToast("Current PIN does not match!", "error");
                 return;
             }
@@ -8299,6 +8391,7 @@ Thank you!
                 return;
             }
 
+            const activeC = (caretakers || []).find(c => c.id === window.unlockedCaretakerId) || (caretakers || []).find(c => c.status === 'Active');
             caretakerCashAdvances.push({
                 id: caretakerCashAdvances.length ? Math.max(...caretakerCashAdvances.map(c => c.id)) + 1 : 1,
                 dateRequested: dt,
@@ -8307,7 +8400,9 @@ Thank you!
                 status: 'PENDING',
                 disbursedDate: '',
                 method: '',
-                notes: 'Awaiting landlord PIN approval & disbursement'
+                notes: 'Awaiting landlord PIN approval & disbursement',
+                caretakerId: activeC ? activeC.id : null,
+                caretakerName: activeC ? activeC.name : 'Caretaker'
             });
 
             saveToStorage();
@@ -8411,6 +8506,8 @@ Thank you!
                 document.getElementById('hire-caretaker-date').value = new Date().toISOString().split('T')[0];
                 document.getElementById('hire-caretaker-salary').value = caretakerMonthlySalary || 4000;
                 document.getElementById('hire-caretaker-notes').value = '';
+                const pinEl = document.getElementById('hire-caretaker-pin');
+                if (pinEl) pinEl.value = '';
                 document.getElementById('landlord-add-caretaker-modal').classList.remove('hidden');
             };
             if (typeof isFinancialsUnlocked !== 'undefined' && isFinancialsUnlocked) {
@@ -8438,6 +8535,7 @@ Thank you!
                 return;
             }
 
+            const newPin = (document.getElementById('hire-caretaker-pin') && document.getElementById('hire-caretaker-pin').value.trim()) || String(Math.floor(10000 + Math.random() * 90000));
             const newCaretaker = {
                 id: caretakers.length ? Math.max(...caretakers.map(c => c.id)) + 1 : 1,
                 name: nm,
@@ -8446,7 +8544,8 @@ Thank you!
                 monthlySalary: sal,
                 hiredDate: dt,
                 status: "Active",
-                notes: nts || "Assigned caretaker"
+                notes: nts || "Assigned caretaker",
+                pin: newPin
             };
 
             caretakers.push(newCaretaker);
@@ -8456,6 +8555,7 @@ Thank you!
             caretakerSalaryRecords.forEach(r => {
                 if (r.status === 'UNPAID') {
                     r.caretakerName = nm;
+                    r.caretakerId = newCaretaker.id;
                     r.baseAmount = sal;
                     r.netAmount = Math.max(0, sal - (parseFloat(r.deductions) || 0));
                 }
@@ -8468,6 +8568,74 @@ Thank you!
         }
 
         // Landlord Remove Caretaker
+        
+        // Landlord Edit Caretaker Record
+        function openEditCaretakerModal(id) {
+            const c = (caretakers || []).find(item => item.id === id);
+            if (!c) return;
+            requestLandlordPin("Authorize Edit Caretaker Record: " + c.name, () => {
+                document.getElementById('edit-caretaker-id').value = c.id;
+                document.getElementById('edit-caretaker-name').value = c.name || '';
+                document.getElementById('edit-caretaker-phone').value = c.phone || '';
+                document.getElementById('edit-caretaker-date').value = c.hiredDate || '';
+                document.getElementById('edit-caretaker-property').value = c.assignedProperty || 'All Properties';
+                document.getElementById('edit-caretaker-salary').value = c.monthlySalary || 4000;
+                document.getElementById('edit-caretaker-status').value = c.status || 'Active';
+                document.getElementById('edit-caretaker-pin').value = '';
+                document.getElementById('edit-caretaker-notes').value = c.notes || '';
+                document.getElementById('landlord-edit-caretaker-modal').classList.remove('hidden');
+            });
+        }
+
+        function closeEditCaretakerModal() {
+            document.getElementById('landlord-edit-caretaker-modal').classList.add('hidden');
+        }
+
+        function submitEditCaretaker(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('edit-caretaker-id').value, 10);
+            const c = (caretakers || []).find(item => item.id === id);
+            if (!c) return;
+
+            const nm = document.getElementById('edit-caretaker-name').value.trim();
+            const ph = document.getElementById('edit-caretaker-phone').value.trim();
+            const dt = document.getElementById('edit-caretaker-date').value;
+            const prop = document.getElementById('edit-caretaker-property').value;
+            const sal = parseFloat(document.getElementById('edit-caretaker-salary').value) || c.monthlySalary;
+            const st = document.getElementById('edit-caretaker-status').value;
+            const pin = document.getElementById('edit-caretaker-pin').value.trim();
+            const nts = document.getElementById('edit-caretaker-notes').value.trim();
+
+            if (!nm) {
+                showToast("Name is required.", "error");
+                return;
+            }
+
+            c.name = nm;
+            c.phone = ph;
+            c.hiredDate = dt;
+            c.assignedProperty = prop;
+            c.monthlySalary = sal;
+            c.status = st;
+            c.notes = nts;
+            if (pin) c.pin = pin;
+
+            // Sync salary into unpaid records for this caretaker
+            caretakerSalaryRecords.forEach(r => {
+                if (r.status === 'UNPAID' && (r.caretakerName === nm || !r.caretakerId || r.caretakerId === id)) {
+                    r.caretakerName = nm;
+                    r.caretakerId = id;
+                    r.baseAmount = sal;
+                    r.netAmount = Math.max(0, sal - (parseFloat(r.deductions) || 0));
+                }
+            });
+
+            saveToStorage();
+            closeEditCaretakerModal();
+            renderCaretakerPayroll();
+            showToast(`Caretaker ${nm} record updated and synced to payroll.`);
+        }
+
         function removeCaretaker(id) {
             const c = (caretakers || []).find(item => item.id === id);
             if (!c) return;
@@ -8652,10 +8820,16 @@ Thank you!
             }
 
             // Calculate Accumulated Unpaid Salary (from May 2026 to current month October 2026)
+            const isPersonalUnlock = !!window.unlockedCaretakerId;
+            const unlockedC = isPersonalUnlock ? (caretakers || []).find(c => c.id === window.unlockedCaretakerId) : null;
+
             const takeoverMonths = ["May 2026", "June 2026", "July 2026", "August 2026", "September 2026", "October 2026"];
-            const relevantRecords = caretakerSalaryRecords.filter(r => takeoverMonths.includes(r.month));
+            let relevantRecords = caretakerSalaryRecords.filter(r => takeoverMonths.includes(r.month));
+            if (isPersonalUnlock && unlockedC) {
+                relevantRecords = relevantRecords.filter(r => r.caretakerId === unlockedC.id || r.caretakerName === unlockedC.name);
+            }
             const unpaidList = relevantRecords.filter(r => r.status === 'UNPAID');
-            const totalUnpaid = unpaidList.reduce((acc, curr) => acc + (parseFloat(curr.netAmount || curr.baseAmount) || 6000), 0);
+            const totalUnpaid = unpaidList.reduce((acc, curr) => acc + (parseFloat(curr.netAmount || curr.baseAmount) || 0), 0);
             const totalPaid = relevantRecords.filter(r => r.status === 'PAID').reduce((acc, curr) => acc + (parseFloat(curr.netAmount) || 0), 0);
 
             const statUnpaid = document.getElementById('payroll-stat-unpaid');
@@ -8663,11 +8837,30 @@ Thank you!
             const statPaid = document.getElementById('payroll-stat-paid');
             const statRate = document.getElementById('payroll-stat-rate');
 
-            const currentRate = caretakerMonthlySalary || 4000;
-            if(statRate) statRate.innerText = `₱${currentRate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            if(statUnpaid) statUnpaid.innerText = `₱${totalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            if(statUnpaidSub) statUnpaidSub.innerText = `${unpaidList.length} Month${unpaidList.length === 1 ? '' : 's'} Unpaid since May 2026 Takeover`;
-            if(statPaid) statPaid.innerText = `₱${totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            const currentRate = unlockedC ? (unlockedC.monthlySalary || caretakerMonthlySalary || 4000) : (caretakerMonthlySalary || 4000);
+
+            // Hide global monthly rate when caretaker is viewing their own account (different salaries)
+            const rateCard = document.getElementById('payroll-stat-rate');
+            if (rateCard) {
+                const rateParent = rateCard.closest('div.p-4');
+                const rateLabel = rateParent ? rateParent.querySelector('p.text-\\[11px\\]') : null;
+                const adjustBtn = rateParent ? rateParent.querySelector('button') : null;
+                if (isPersonalUnlock && unlockedC) {
+                    rateCard.innerText = `₱${(unlockedC.monthlySalary || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    rateCard.title = unlockedC.name + ' personal rate';
+                    if (rateLabel) rateLabel.innerText = unlockedC.name + ' Monthly Rate';
+                    if (adjustBtn) adjustBtn.classList.add('hidden');
+                } else {
+                    // Landlord / multi-caretaker view: do not display a single monthly salary
+                    rateCard.innerText = 'Varies by caretaker';
+                    rateCard.title = 'Each caretaker has a different salary — enter personal PIN to view';
+                    if (rateLabel) rateLabel.innerText = 'Monthly Base Rate';
+                    if (adjustBtn) adjustBtn.classList.remove('hidden');
+                }
+            }
+            if(statUnpaid) statUnpaid.innerText = isPersonalUnlock ? `₱${totalUnpaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '••••';
+            if(statUnpaidSub) statUnpaidSub.innerText = isPersonalUnlock ? `${unpaidList.length} Month${unpaidList.length === 1 ? '' : 's'} Unpaid` : 'Enter PIN to view';
+            if(statPaid) statPaid.innerText = isPersonalUnlock ? `₱${totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '••••';
 
             // Render Caretaker Staff Roster List
             const rosterEl = document.getElementById('caretaker-roster-list');
@@ -8696,9 +8889,14 @@ Thank you!
                                             </span>
                                         </div>
                                     </div>
-                                    <button onclick="removeCaretaker(${c.id})" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-950/40 transition" title="Remove Caretaker">
-                                        <i class="fa-solid fa-trash-can text-xs"></i>
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button onclick="openEditCaretakerModal(${c.id})" class="text-indigo-400 hover:text-indigo-300 p-1.5 rounded-lg hover:bg-indigo-950/40 transition" title="Edit Caretaker (Landlord)">
+                                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                        </button>
+                                        <button onclick="removeCaretaker(${c.id})" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-950/40 transition" title="Remove Caretaker">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-800/80">
                                     <div>
@@ -8707,7 +8905,7 @@ Thank you!
                                     </div>
                                     <div>
                                         <span class="text-slate-400 block uppercase font-semibold text-[10px]">Monthly Salary</span>
-                                        <span class="text-emerald-400 font-extrabold text-xs">₱${(parseFloat(c.monthlySalary) || currentRate).toLocaleString()}.00</span>
+                                        <span class="text-emerald-400 font-extrabold text-xs">${ (window.unlockedCaretakerId === c.id) ? ('₱' + (parseFloat(c.monthlySalary) || 0).toLocaleString() + '.00') : '•••• (PIN required)' }</span>
                                     </div>
                                     <div>
                                         <span class="text-slate-400 block uppercase font-semibold text-[10px]">Phone / Mobile</span>
@@ -8729,7 +8927,10 @@ Thank you!
             const tbody = document.getElementById('caretaker-payroll-table-body');
             if(tbody) {
                 tbody.innerHTML = '';
-                caretakerSalaryRecords.forEach(r => {
+                const recordsToShow = isPersonalUnlock
+                    ? caretakerSalaryRecords.filter(r => r.caretakerId === window.unlockedCaretakerId || (r.caretakerName && unlockedC && r.caretakerName === unlockedC.name))
+                    : caretakerSalaryRecords;
+                recordsToShow.forEach(r => {
                     const isPaid = r.status === 'PAID';
                     const statusBadge = isPaid
                         ? `<span class="px-2.5 py-1 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded text-xs font-bold"><i class="fa-solid fa-circle-check mr-1"></i> PAID</span>`
@@ -8792,7 +8993,7 @@ Thank you!
                             <tr class="hover:bg-slate-800/50 transition">
                                 <td class="px-4 py-3 text-slate-300">${formatDateMDY ? formatDateMDY(c.dateRequested) : c.dateRequested}</td>
                                 <td class="px-4 py-3 text-right font-extrabold text-amber-300">₱${parseFloat(c.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                <td class="px-4 py-3 text-white font-medium">${c.reason}</td>
+                                <td class="px-4 py-3 text-white font-medium">${c.caretakerName ? '<span class="text-indigo-300">[' + c.caretakerName + ']</span> ' : ''}${c.reason}</td>
                                 <td class="px-4 py-3 text-center">${stBadge}</td>
                                 <td class="px-4 py-3 text-slate-400 text-[11px]">${c.notes || '-'}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">${caAction}</td>
@@ -10186,6 +10387,37 @@ Thank you!
 
             pendingExpenses.push(newExp);
 
+            // Synchronize Caretaker Salary expenses into payroll records
+            if (category === 'Caretaker Salary' || /salary|allowance/i.test(category)) {
+                const expDateObj = expDate ? new Date(expDate) : new Date();
+                const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+                const monthKey = monthNames[expDateObj.getMonth()] + " " + expDateObj.getFullYear();
+                let rec = caretakerSalaryRecords.find(r => r.month === monthKey);
+                if (!rec) {
+                    rec = {
+                        id: caretakerSalaryRecords.length ? Math.max(...caretakerSalaryRecords.map(r => r.id)) + 1 : 1,
+                        month: monthKey,
+                        caretakerName: (caretakers.find(c => c.status === 'Active') || {}).name || 'Caretaker',
+                        baseAmount: amt,
+                        deductions: 0,
+                        netAmount: amt,
+                        status: expStatus === 'APPROVED' ? 'PAID' : 'UNPAID',
+                        method: '',
+                        dateDisbursed: expStatus === 'APPROVED' ? expDate : '',
+                        notes: 'Synced from expense submission'
+                    };
+                    caretakerSalaryRecords.push(rec);
+                } else {
+                    if (expStatus === 'APPROVED') {
+                        rec.status = 'PAID';
+                        rec.netAmount = amt;
+                        rec.baseAmount = Math.max(rec.baseAmount || 0, amt);
+                        rec.dateDisbursed = expDate;
+                        rec.notes = (rec.notes || '') + ' | Synced from approved expense';
+                    }
+                }
+            }
+
             if (expStatus === 'APPROVED') {
                 const matchMonth = monthlyFinancials.find(m => m.active && m.month.toLowerCase().includes('october 2026')) || monthlyFinancials.find(m => m.active);
                 if (matchMonth) {
@@ -10200,7 +10432,7 @@ Thank you!
             renderAll();
 
             if (expStatus === 'APPROVED') {
-                showToast("Expense entry saved & approved directly into ledger!");
+                showToast("Expense entry saved & approved directly into ledger! Salary synced to payroll if applicable.");
             } else {
                 showToast("Expense receipt submitted! Awaiting Landlord approval.");
             }
@@ -10953,7 +11185,7 @@ Thank you!
                     annualPayments = data.annualPayments || {};
                     caretakerSalaryRecords = data.caretakerSalaryRecords || defaultCaretakerSalaryRecords;
                     caretakerCashAdvances = data.caretakerCashAdvances || [];
-                    caretakerPin = data.caretakerPin || "12345";
+                    caretakerPin = data.caretakerPin || "passw0rd";
                     if (Array.isArray(data.caretakers) && data.caretakers.length > 0) caretakers = data.caretakers;
                     else caretakers = JSON.parse(JSON.stringify(defaultCaretakers));
                     if (data.caretakerMonthlySalary !== undefined) caretakerMonthlySalary = parseFloat(data.caretakerMonthlySalary) || 4000;
@@ -11037,6 +11269,13 @@ Thank you!
                 db.ref('celouPropertyData').on('value', (snapshot) => {
                     const serverData = snapshot.val();
                     if (serverData && window.initialLoadDone) {
+                        const localTs = parseInt(localStorage.getItem('celouLastModified') || '0', 10);
+                        const serverTs = serverData.lastModified || 0;
+                        // Prefer local if it is newer (prevents 3-min revert from stale server writes)
+                        if (localTs && serverTs && localTs > serverTs + 2000) {
+                            return; // ignore older server snapshot
+                        }
+
                         tenants = serverData.tenants || tenants;
                         rooms = serverData.rooms || rooms;
                         utilities = serverData.utilities || utilities;
@@ -11046,6 +11285,17 @@ Thank you!
                         pendingExpenses = serverData.pendingExpenses || pendingExpenses;
                         takeoverAudits = serverData.takeoverAudits || takeoverAudits;
                         annualPayments = serverData.annualPayments || annualPayments;
+
+                        // Full caretaker sync
+                        if (Array.isArray(serverData.caretakerSalaryRecords)) caretakerSalaryRecords = serverData.caretakerSalaryRecords;
+                        if (Array.isArray(serverData.caretakerCashAdvances)) caretakerCashAdvances = serverData.caretakerCashAdvances;
+                        if (serverData.caretakerPin) caretakerPin = serverData.caretakerPin;
+                        if (Array.isArray(serverData.caretakers)) caretakers = serverData.caretakers;
+                        if (serverData.caretakerMonthlySalary !== undefined) caretakerMonthlySalary = parseFloat(serverData.caretakerMonthlySalary) || caretakerMonthlySalary;
+
+                        if (serverTs) {
+                            try { localStorage.setItem('celouLastModified', String(serverTs)); } catch(e) {}
+                        }
 
                         if (Array.isArray(tenants)) {
                             tenants.forEach(t => {
