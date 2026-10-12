@@ -7,9 +7,9 @@
     <meta name="description" content="Celou Rental Property - Tenant Portal & Management">
     <meta property="og:title" content="Celou Rental Property - Tenant Portal & Management">
     <meta property="og:description" content="Celou Rental Property - Tenant Portal & Management">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
     
     <!-- PWA Manifest & Mobile Installation Meta -->
     <link rel="manifest" href="/manifest.json">
@@ -18,8 +18,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CelouRental">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
     <script>
         // Check immediately if this is a public transaction link (#apply, #repair, #ticket, #update-info, #tenant-portal, #bill, #sign, #lease, #pay, #qr)
         (function() {
@@ -57,15 +57,10 @@
         // Early capture of beforeinstallprompt so Chrome on mobile & tablet never misses the event
         window.deferredPWAInstallPrompt = null;
         window.addEventListener('beforeinstallprompt', function(e) {
-            e.preventDefault();
+            // Store first, then prevent default so our button can call prompt()
             window.deferredPWAInstallPrompt = e;
-            // Never prompt on public transaction links
-            var rawHash = window.location.hash || '';
-            var path = rawHash.split('?')[0];
-            var publicRoutes = ['#apply', '#repair', '#ticket', '#update-info', '#tenant-portal', '#bill', '#sign', '#lease', '#pay', '#qr'];
-            if (publicRoutes.indexOf(path) !== -1) {
-                return;
-            }
+            e.preventDefault();
+            console.log('beforeinstallprompt captured');
             if (typeof window.onPWAPromptCaptured === 'function') {
                 window.onPWAPromptCaptured(e);
             }
@@ -164,7 +159,7 @@
                 <i class="fa-solid fa-key mr-1.5 text-amber-400"></i> Landlord PIN
             </button>
             <div class="flex items-center space-x-1.5 ml-auto">
-                <button id="top-btn-pwa-install" onclick="triggerPWAInstall()" class="hidden bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center whitespace-nowrap animate-pulse" title="Install Celou Rental Property app on your phone, tablet, or desktop">
+                <button id="top-btn-pwa-install" onclick="triggerPWAInstall()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow flex items-center whitespace-nowrap animate-pulse" title="Install Celou Rental Property app on your phone, tablet, or desktop">
                     <i class="fa-solid fa-download mr-1.5"></i> Install App
                 </button>
                 <button onclick="openJsonSyncModal()" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow flex items-center whitespace-nowrap" title="Multi-Device JSON Sync: Export & Import complete backup between Phone & PC">
@@ -4200,49 +4195,46 @@
 
         function triggerPWAInstall() {
             if (isRunningStandalonePWA()) {
-                if (typeof showToast === 'function') {
-                    showToast("Celou App is already installed and active on this device!", "info");
-                }
+                if (typeof showToast === 'function') showToast("Celou App is already installed!", "info");
                 return;
             }
 
-            const promptEvent = deferredPWAInstallPrompt || window.deferredPWAInstallPrompt;
-            const isChrome = /chrome|chromium|crios/i.test(navigator.userAgent) && !/edg|opr|opera/i.test(navigator.userAgent);
+            const promptEvent = window.deferredPWAInstallPrompt || deferredPWAInstallPrompt;
             const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
 
             if (!isSecure) {
-                if (typeof showToast === 'function') {
-                    showToast("Install requires HTTPS. Open the site over a secure connection (https://).", "error");
-                }
+                if (typeof showToast === 'function') showToast("Install only works on HTTPS or localhost.", "error");
                 openIOSGuideModal();
                 return;
             }
 
-            if (promptEvent) {
-                promptEvent.prompt();
-                promptEvent.userChoice.then((choiceResult) => {
-                    if (choiceResult && choiceResult.outcome === 'accepted') {
-                        hidePWAInstallButtons();
-                        if (typeof showToast === 'function') {
-                            showToast("Celou App installation initiated!", "success");
+            if (promptEvent && typeof promptEvent.prompt === 'function') {
+                // Real install dialog
+                promptEvent.prompt()
+                    .then(function() { return promptEvent.userChoice; })
+                    .then(function(choice) {
+                        if (choice && choice.outcome === 'accepted') {
+                            hidePWAInstallButtons();
+                            if (typeof showToast === 'function') showToast("Installing Celou App…", "success");
+                        } else {
+                            if (typeof showToast === 'function') showToast("Install cancelled.", "info");
                         }
-                    } else {
-                        if (typeof showToast === 'function') {
-                            showToast("Installation postponed. You can install anytime via the Chrome menu.", "info");
-                        }
-                    }
-                    deferredPWAInstallPrompt = null;
-                    window.deferredPWAInstallPrompt = null;
-                }).catch((err) => {
-                    console.warn("PWA install prompt error:", err);
-                    openIOSGuideModal();
-                });
+                        deferredPWAInstallPrompt = null;
+                        window.deferredPWAInstallPrompt = null;
+                    })
+                    .catch(function(err) {
+                        console.warn('prompt() failed', err);
+                        openIOSGuideModal();
+                    });
             } else {
-                // Native prompt not ready — show Chrome instructions
+                // Prompt not available — show guide and explain why
                 openIOSGuideModal();
-                if (isChrome && typeof showToast === 'function') {
-                    showToast("Look for the Install icon in the address bar, or menu (⋮) → Save and share → Install Celou Rental Property.", "info");
-                }
+                var reason = 'Install prompt not ready. ';
+                if (!('serviceWorker' in navigator)) reason += 'Service worker not supported. ';
+                else reason += 'Make sure the site is on HTTPS, icons load, and refresh once. ';
+                reason += 'Or use Chrome menu (⋮) → Install app.';
+                if (typeof showToast === 'function') showToast(reason, "info");
+                console.log('No beforeinstallprompt event stored. Criteria may not be met.');
             }
         }
 
@@ -4275,6 +4267,18 @@
                 }
             }
         }
+
+        
+        // Force show install button and warn if not secure
+        document.addEventListener('DOMContentLoaded', function() {
+            if (location.protocol === 'file:') {
+                console.warn('PWA install will not work on file:// — serve over HTTPS or localhost');
+            }
+            const btn = document.getElementById('top-btn-pwa-install');
+            if (btn && !window.matchMedia('(display-mode: standalone)').matches) {
+                btn.classList.remove('hidden');
+            }
+        });
 
         // Listen for browser beforeinstallprompt (Chrome / Android / Desktop)
         window.addEventListener('beforeinstallprompt', (e) => {
