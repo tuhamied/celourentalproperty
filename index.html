@@ -8380,6 +8380,64 @@ Thank you!
             document.getElementById('caretaker-cash-advance-modal').classList.add('hidden');
         }
 
+
+        // Helper: get next unpaid payroll record for a caretaker
+        function getNextUnpaidPayrollRecord(caretakerId, caretakerName) {
+            const months = ["May 2026","June 2026","July 2026","August 2026","September 2026","October 2026","November 2026","December 2026"];
+            for (const m of months) {
+                let rec = caretakerSalaryRecords.find(r => r.month === m && (r.status === 'UNPAID' || !r.status));
+                if (!rec) {
+                    // create if missing
+                    rec = {
+                        id: caretakerSalaryRecords.length ? Math.max(...caretakerSalaryRecords.map(r => r.id)) + 1 : 1,
+                        month: m,
+                        caretakerId: caretakerId || null,
+                        caretakerName: caretakerName || 'Caretaker',
+                        baseAmount: (caretakers.find(c => c.id === caretakerId) || {}).monthlySalary || caretakerMonthlySalary || 4000,
+                        deductions: 0,
+                        netAmount: (caretakers.find(c => c.id === caretakerId) || {}).monthlySalary || caretakerMonthlySalary || 4000,
+                        status: 'UNPAID',
+                        method: '',
+                        dateDisbursed: '',
+                        notes: 'Pending landlord disbursement'
+                    };
+                    caretakerSalaryRecords.push(rec);
+                    return rec;
+                }
+                if (!rec.caretakerId || rec.caretakerId === caretakerId || rec.caretakerName === caretakerName) {
+                    return rec;
+                }
+            }
+            return null;
+        }
+
+        // Apply or reverse a cash advance deduction on payroll
+        function applyCashAdvanceToPayroll(ca, apply = true) {
+            if (!ca) return;
+            const rec = getNextUnpaidPayrollRecord(ca.caretakerId, ca.caretakerName);
+            if (!rec) return;
+            const amt = parseFloat(ca.amount) || 0;
+            if (apply) {
+                if (!ca.deductedInSalaryMonth) {
+                    rec.deductions = (parseFloat(rec.deductions) || 0) + amt;
+                    rec.netAmount = Math.max(0, (parseFloat(rec.baseAmount) || 0) - rec.deductions);
+                    ca.deductedInSalaryMonth = rec.month;
+                    ca.notes = (ca.notes || '') + ` (Auto-deducted from ${rec.month} payroll)`;
+                }
+            } else {
+                if (ca.deductedInSalaryMonth) {
+                    rec.deductions = Math.max(0, (parseFloat(rec.deductions) || 0) - amt);
+                    rec.netAmount = Math.max(0, (parseFloat(rec.baseAmount) || 0) - rec.deductions);
+                    const note = ` (Auto-deducted from ${ca.deductedInSalaryMonth} payroll)`;
+                    if (ca.notes && ca.notes.includes(note)) {
+                        ca.notes = ca.notes.replace(note, '');
+                    }
+                    ca.deductedInSalaryMonth = null;
+                    ca.notes = (ca.notes || '') + ' (Deduction reversed)';
+                }
+            }
+        }
+
         function submitCaretakerCashAdvance(e) {
             e.preventDefault();
             const amt = parseFloat(document.getElementById('ca-amount').value) || 0;
@@ -8418,10 +8476,11 @@ Thank you!
                 ca.status = 'APPROVED';
                 ca.disbursedDate = new Date().toISOString().split('T')[0];
                 ca.method = 'CASH';
-                ca.notes = `Approved & disbursed on ${ca.disbursedDate}. Deductible from upcoming salary.`;
+                ca.notes = `Approved & disbursed on ${ca.disbursedDate}. Auto-deducted from payroll.`;
+                applyCashAdvanceToPayroll(ca, true);
                 saveToStorage();
                 renderCaretakerPayroll();
-                showToast(`Cash advance of ₱${ca.amount.toLocaleString()} approved for Caretaker!`);
+                showToast(`Cash advance of ₱${ca.amount.toLocaleString()} approved and deducted from payroll!`);
             });
         }
 
@@ -8430,19 +8489,22 @@ Thank you!
             if(!ca) return;
             requestLandlordPin(`Reject Cash Advance ₱${ca.amount.toLocaleString()}`, () => {
                 ca.status = 'REJECTED';
-                ca.notes = 'Declined by Landlord.';
+                applyCashAdvanceToPayroll(ca, false); // reverse if previously deducted
+                ca.notes = 'Declined by Landlord. Deduction reversed if previously applied.';
                 saveToStorage();
                 renderCaretakerPayroll();
-                showToast("Cash advance request rejected.");
+                showToast("Cash advance request rejected. Any payroll deduction was reversed.");
             });
         }
 
         function deleteCashAdvance(id) {
             requestLandlordPin("Delete Cash Advance Request", () => {
+                const ca = caretakerCashAdvances.find(c => c.id === id);
+                if (ca) applyCashAdvanceToPayroll(ca, false); // reverse deduction first
                 caretakerCashAdvances = caretakerCashAdvances.filter(c => c.id !== id);
                 saveToStorage();
                 renderCaretakerPayroll();
-                showToast("Cash advance record removed.");
+                showToast("Cash advance record removed and any payroll deduction reversed.");
             });
         }
 
@@ -9964,9 +10026,47 @@ Thank you!
                     matchMonth.expense += parseFloat(exp.amount) || 0;
                 }
 
+                // Sync Caretaker Salary / Allowance expenses into payroll when approved
+                const isSalaryExp = exp.category === 'Caretaker Salary' ||
+                                    /salary|allowance/i.test(exp.category || '') ||
+                                    /salary|allowance/i.test(exp.description || '');
+                if (isSalaryExp) {
+                    const expDateObj = exp.date ? new Date(exp.date) : new Date();
+                    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+                    const monthKey = monthNames[expDateObj.getMonth()] + " " + expDateObj.getFullYear();
+                    const activeC = (caretakers || []).find(c => c.status === 'Active');
+                    let rec = caretakerSalaryRecords.find(r => r.month === monthKey);
+                    if (!rec) {
+                        rec = {
+                            id: caretakerSalaryRecords.length ? Math.max(...caretakerSalaryRecords.map(r => r.id)) + 1 : 1,
+                            month: monthKey,
+                            caretakerId: activeC ? activeC.id : null,
+                            caretakerName: activeC ? activeC.name : 'Caretaker',
+                            baseAmount: parseFloat(exp.amount) || 0,
+                            deductions: 0,
+                            netAmount: parseFloat(exp.amount) || 0,
+                            status: 'PAID',
+                            method: 'Expense Sync',
+                            dateDisbursed: exp.date || '',
+                            notes: 'Synced from approved expense: ' + (exp.description || '')
+                        };
+                        caretakerSalaryRecords.push(rec);
+                    } else {
+                        rec.status = 'PAID';
+                        rec.baseAmount = Math.max(parseFloat(rec.baseAmount) || 0, parseFloat(exp.amount) || 0);
+                        rec.netAmount = Math.max(0, rec.baseAmount - (parseFloat(rec.deductions) || 0));
+                        rec.dateDisbursed = exp.date || rec.dateDisbursed;
+                        rec.method = rec.method || 'Expense Sync';
+                        rec.notes = (rec.notes || '') + ' | Synced from approved expense';
+                        if (activeC && !rec.caretakerId) rec.caretakerId = activeC.id;
+                        if (activeC && !rec.caretakerName) rec.caretakerName = activeC.name;
+                    }
+                }
+
                 saveToStorage();
                 renderAll();
-                showToast(`Expense receipt of ₱${parseFloat(exp.amount).toLocaleString()} approved!`);
+                if (typeof renderCaretakerPayroll === 'function') renderCaretakerPayroll();
+                showToast(`Expense of ₱${parseFloat(exp.amount).toLocaleString()} approved!${isSalaryExp ? ' Synced to caretaker payroll.' : ''}`);
             });
         }
 
